@@ -25,10 +25,10 @@ INSERT INTO [dbName].[dbo].[TableName]
        Col4,
        Col5)
 VALUES
-   (@ID,
+      (@ID,
        @Date1,
        'A', --ADD
-    '1000001',
+       '1000001',
        'Col4',
        'Col5')
 
