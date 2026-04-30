@@ -4,7 +4,7 @@ Use dbName
 -- Clean up any previous runs of the test
 -----------------------------------------
 
-DELETE FROM [dbName].[dbo].[tableName] -- source
+DELETE FROM [dbName].[dbo].[TableName] -- source
 WHERE ACCT_NO IN ('1000001')
 
 -----------------------------------------
@@ -15,22 +15,22 @@ DECLARE @Date1 DATE;
 SET @Date1 = '2026-02-25';
 
 DECLARE @ID INT;
-SET @ID = COALESCE((SELECT MAX(ID) FROM dbo.tableName), 0) + 1
+SET @ID = COALESCE((SELECT MAX(ID) FROM dbo.TableName), 0) + 1
 
-INSERT INTO [dbName].[dbo].[tableName]
+INSERT INTO [dbName].[dbo].[TableName]
    (ID,
-    DATE_FIELD,
-    CHANGE_TYPE,
-    ACCT_NO,
-    Col4,
-    Col5)
+       DATE_FIELD,
+       CHANGE_TYPE,
+       ACCT_NO,
+       Col4,
+       Col5)
 VALUES
    (@ID,
-    @Date1,
-    'A', --ADD
+       @Date1,
+       'A', --ADD
     '1000001',
-    'Col4',
-    'Col5')
+       'Col4',
+       'Col5')
 
 /*
  Continue to build out testing for all scenarios:
@@ -44,7 +44,7 @@ VALUES
 -----------------------------------------
 -- Review inserted data
 -----------------------------------------
-SELECT '[dbName].[dbo].[tableName]'
+SELECT '[dbName].[dbo].[TableName]'
 SELECT ID, DATE_FIELD, CHANGE_TYPE, ACCT_NO, Col4, Col5
-FROM [dbName].[dbo].[tableName]
+FROM [dbName].[dbo].[TableName]
 WHERE ACCT_NO IN ('1000001')
