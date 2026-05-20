@@ -1,36 +1,63 @@
 """
---> This file contains pytest tests for the validator. It is not used by the main application. Use if using pytest.
 Test: Unified Dataset Validation
 --------------------------------
-This test performs a full end‑to‑end validation of a dataset by:
+This test mirrors the full workflow used by the CLI runner and Streamlit app:
 
-- Loading expected CSV data
-- Loading actual SQLite data
-- Running the Validator to compare both datasets
-- Producing a single PASS/FAIL result
-- Listing all differences when the datasets do not match
-- Printing a developer‑friendly summary using print_summary() from conftest.py
+- Discover datasets automatically
+- Select a dataset (first one for testing)
+- Load expected CSV + actual SQLite
+- Apply TABLE_NAME_MAP for table naming
+- Run Validator
+- Print developer‑friendly summary (via print_summary from conftest.py)
+- Assert PASS or FAIL
 
-This test verifies the entire workflow:
-file loading → validation → reporting.
+This ensures the test suite stays aligned with the application architecture.
 """
 
 # ---------------------------------------------------------------------------
 # Imports
 # ---------------------------------------------------------------------------
 
+from .conftest import print_summary
 from python_data_validator.framework.data_loader import DataLoader
 from python_data_validator.framework.validators import Validator
 from python_data_validator.framework.config import (
     BASE_DATA_PATH,
-    DEFAULT_ACTUAL_DB,
-    DEFAULT_EXPECTED_CSV,
-    DEFAULT_TABLE_NAME,
+    ACTUAL_DIR,
+    EXPECTED_DIR,
+    TABLE_NAME_MAP,
 )
 
 # NOTE:
-# print_summary is NOT imported.
+# print_summary is NOT imported here.
 # Pytest automatically loads it from conftest.py.
+
+
+# ---------------------------------------------------------------------------
+# Dataset Discovery (same logic as CLI + Streamlit)
+# ---------------------------------------------------------------------------
+
+def infer_dataset_name(path):
+    stem = path.stem
+    return stem.split("_", 1)[0] if "_" in stem else stem
+
+
+def discover_datasets():
+    datasets = {}
+
+    # Actual SQLite files
+    for db_path in ACTUAL_DIR.glob("*.sqlite"):
+        ds = infer_dataset_name(db_path)
+        datasets.setdefault(ds, {"actual": [], "expected": []})
+        datasets[ds]["actual"].append(db_path)
+
+    # Expected CSV files
+    for csv_path in EXPECTED_DIR.glob("*.csv"):
+        ds = infer_dataset_name(csv_path)
+        datasets.setdefault(ds, {"actual": [], "expected": []})
+        datasets[ds]["expected"].append(csv_path)
+
+    return datasets
 
 
 # ---------------------------------------------------------------------------
@@ -39,40 +66,55 @@ from python_data_validator.framework.config import (
 
 def test_dataset_validation():
     """
-    Runs a full end‑to‑end validation of the configured dataset.
+    Full end‑to‑end validation test using the same workflow as the CLI runner.
     """
+
+    # -----------------------------
+    # Discover datasets
+    # -----------------------------
+    datasets = discover_datasets()
+    assert datasets, "No datasets found under data/actual or data/expected."
+
+    # Pick the first dataset for testing
+    dataset_name = sorted(datasets.keys())[0]
+    ds_info = datasets[dataset_name]
 
     # -----------------------------
     # Resolve file paths
     # -----------------------------
-    loader = DataLoader(BASE_DATA_PATH)
+    actual_files = sorted(ds_info["actual"])
+    expected_files = sorted(ds_info["expected"])
 
-    actual_path = loader.base_path / DEFAULT_ACTUAL_DB
-    expected_path = loader.base_path / DEFAULT_EXPECTED_CSV
+    assert actual_files, f"No actual SQLite files for dataset '{dataset_name}'."
+    assert expected_files, f"No expected CSV files for dataset '{dataset_name}'."
 
-    # -----------------------------
-    # Ensure files exist
-    # -----------------------------
-    assert actual_path.exists(), f"Missing actual DB: {actual_path}"
-    assert expected_path.exists(), f"Missing expected CSV: {expected_path}"
+    actual_path = actual_files[0]
+    expected_path = expected_files[0]
 
     # -----------------------------
     # Load datasets
     # -----------------------------
-    expected = loader.load_csv(DEFAULT_EXPECTED_CSV)
-    actual = loader.load_sqlite_table(DEFAULT_ACTUAL_DB, DEFAULT_TABLE_NAME)
+    loader = DataLoader(base_data_path=str(BASE_DATA_PATH))
+
+    expected = loader.load(str(expected_path.relative_to(BASE_DATA_PATH)))
+
+    table_name = TABLE_NAME_MAP.get(dataset_name, dataset_name)
+
+    actual = loader.load_sqlite_table(
+        str(actual_path.relative_to(BASE_DATA_PATH)),
+        table_name,
+    )
 
     # -----------------------------
     # Run validation
     # -----------------------------
-    validator = Validator()
+    validator = Validator(key_field="id")
     result = validator.validate(expected, actual)
 
     # -----------------------------
     # Developer‑friendly summary
-    # (print_summary comes from conftest.py)
     # -----------------------------
-    print_summary("Unified Dataset Validation", result)
+    print_summary(f"Unified Dataset Validation: {dataset_name}", result)
 
     # -----------------------------
     # If FAIL → print differences
@@ -83,6 +125,6 @@ def test_dataset_validation():
             print(f"- {diff}")
 
     # -----------------------------
-    # Perfect dataset should PASS
+    # Assert PASS/FAIL
     # -----------------------------
     assert result["status"] == "PASS"
