@@ -8,12 +8,13 @@ Anything defined here (like helper functions or fixtures) becomes
 available to tests *without* needing an import.
 
 Included:
-- print_summary(): Prints a clean, readable summary of a validation result.
+- print_summary(): Pretty, unified summary output matching the CLI runner
+  and Streamlit app formatting.
 """
 
 def print_summary(test_name, result):
     """
-    Print a structured summary of a validation result.
+    Print a clean, unified summary of a validation result.
 
     Parameters
     ----------
@@ -24,28 +25,33 @@ def print_summary(test_name, result):
         The dictionary returned by Validator.validate(), expected to contain:
             - "status": PASS or FAIL
             - "summary": dict of numeric counts
-            - "differences": list of mismatch descriptions
+            - "differences": list of issue descriptions
     """
 
-    print(f"\n=== {test_name} ===")
-    print(f"Status: {result.get('status', 'UNKNOWN')}")
+    print("\n" + "=" * 70)
+    print(f"{test_name}")
+    print("=" * 70)
+
+    # Status
+    status = result.get("status", "UNKNOWN")
+    print(f"Status: {status}\n")
 
     # Summary counts
     summary = result.get("summary", {})
+    print("Summary:")
     if summary:
-        print("\nSummary:")
         for key, value in summary.items():
-            print(f"- {key}: {value}")
+            print(f"  {key}: {value}")
     else:
-        print("\nSummary: (none provided)")
+        print("  (none provided)")
 
     # Differences
     diffs = result.get("differences", [])
+    print("\nDifferences:")
     if diffs:
-        print("\nDifferences:")
         for diff in diffs:
-            print(f"- {diff}")
+            print(f"  - {diff}")
     else:
-        print("\nDifferences: None")
+        print("  None")
 
-    print("------------------------------\n")
+    print("=" * 70 + "\n")
