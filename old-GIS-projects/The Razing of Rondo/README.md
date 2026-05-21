@@ -11,7 +11,8 @@ This project is part of my **GIS portfolio archive**, highlighting early my work
 
 ### **📄 Research Poster (PDF via Web Viewer)**  
 *Geocoding Historical Architecture and the Razing of Rondo*  
-👉 **https://kmrw0101.github.io/KMR-portfolio/rondo.html**
+👉 [Full PDF (Dropbox)](https://www.dropbox.com/scl/fi/7wwy9z1zuv57k1g6ayajd/Geocoding-Historical-Architecture-and-the-Razing-of-Rondo.pdf?rlkey=5mm5ubyw9ua3ywv1acv9i8g7b&st=eiwi3z1v&raw=1)
+
 
 ### **🖼️ Historical Map (JPG)**  
 Digitized visualization of notable locations along the former Rondo Avenue.  
